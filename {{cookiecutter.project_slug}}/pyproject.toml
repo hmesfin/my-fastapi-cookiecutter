@@ -1,0 +1,62 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "{{ cookiecutter.version }}"
+description = "{{ cookiecutter.description }}"
+authors = [
+  { name = "{{ cookiecutter.author_name }}", email = "{{ cookiecutter.email }}" },
+]
+requires-python = ">={{ cookiecutter.python_version }}"
+dependencies = [
+  "fastapi[standard]>=0.115",
+  "uvicorn[standard]>=0.34",
+  "sqlalchemy[asyncio]>=2.0",
+  "asyncpg>=0.30",
+  "alembic>=1.14",
+  "pydantic-settings>=2.7",
+  "pyjwt>=2.10",
+  "pwdlib[argon2]>=0.2",
+  "sqladmin>=0.20",
+  "httpx>=0.28",
+  "typer>=0.15",
+  "python-multipart>=0.0.18",
+  "itsdangerous>=2.2",
+  {%- if cookiecutter.use_sentry == "y" %}
+  "sentry-sdk[fastapi]>=2.19",
+  {%- endif %}
+  {%- if cookiecutter.use_celery == "y" %}
+  "celery>=5.4",
+  "redis>=5.2",
+  "flower>=2.0",
+  {%- endif %}
+  {%- if cookiecutter.cloud_storage != "None" %}
+  "aioboto3>=13",
+  {%- endif %}
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.25",
+  "httpx>=0.28",
+  "factory-boy>=3.3",
+  "pytest-cov>=6.0",
+  "ruff>=0.8",
+]
+
+[project.scripts]
+cli = "{{ cookiecutter.project_slug }}.cli:app"
+
+[tool.ruff]
+line-length = 88
+target-version = "py{{ cookiecutter.python_version | replace('.', '') }}"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.backends"
