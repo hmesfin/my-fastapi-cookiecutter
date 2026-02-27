@@ -1,0 +1,4 @@
+FASTAPI_ENV=local
+SECRET_KEY=!!!SET BY POST_GEN_HOOK!!!
+DEBUG=true
+DOMAIN=localhost
