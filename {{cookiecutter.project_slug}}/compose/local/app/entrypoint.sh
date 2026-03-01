@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 
 # Wait for postgres
-until python -c "
+until uv run python -c "
 import asyncio, asyncpg, os
 async def check():
     conn = await asyncpg.connect(
