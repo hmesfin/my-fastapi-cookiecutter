@@ -1,0 +1,91 @@
+volumes:
+  local_postgres_data: {}
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: compose/local/app/Dockerfile
+    command: uv run uvicorn {{ cookiecutter.project_slug }}.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .envs/.local/.app
+      - .envs/.local/.postgres
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    build:
+      context: .
+      dockerfile: compose/local/postgres/Dockerfile
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .envs/.local/.postgres
+    environment:
+      - POSTGRES_DB={{ cookiecutter.project_slug }}
+      - POSTGRES_USER=dev
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+{%- if cookiecutter.use_mailpit == "y" %}
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+{%- endif %}
+{%- if cookiecutter.use_celery == "y" %}
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: compose/local/app/Dockerfile
+    command: uv run celery -A {{ cookiecutter.project_slug }}.celery_app worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .envs/.local/.app
+      - .envs/.local/.postgres
+    depends_on:
+      - postgres
+      - redis
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: compose/local/app/Dockerfile
+    command: uv run celery -A {{ cookiecutter.project_slug }}.celery_app beat -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .envs/.local/.app
+      - .envs/.local/.postgres
+    depends_on:
+      - postgres
+      - redis
+
+  flower:
+    build:
+      context: .
+      dockerfile: compose/local/app/Dockerfile
+    command: uv run celery -A {{ cookiecutter.project_slug }}.celery_app flower
+    volumes:
+      - .:/app
+    ports:
+      - "5555:5555"
+    env_file:
+      - .envs/.local/.app
+      - .envs/.local/.postgres
+    depends_on:
+      - redis
+{%- endif %}
