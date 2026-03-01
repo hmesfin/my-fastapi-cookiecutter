@@ -28,7 +28,7 @@ Generates a fully Dockerized FastAPI application with PostgreSQL, Alembic migrat
 pip install cookiecutter
 
 # Generate your project
-cookiecutter gh:hamel/my-fastapi-cookiecutter
+cookiecutter gh:hmesfin/my-fastapi-cookiecutter
 
 # Start developing
 cd your_project_slug
