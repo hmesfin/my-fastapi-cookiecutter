@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 
 # Wait for postgres
-until uv run python -c "
+until python -c "
 import asyncio, asyncpg, os
 async def check():
     conn = await asyncpg.connect(
@@ -25,6 +25,6 @@ done
 echo "PostgreSQL is ready!"
 
 # Run migrations
-uv run alembic upgrade head
+alembic upgrade head
 
 exec "$@"

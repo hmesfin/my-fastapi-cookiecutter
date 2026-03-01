@@ -19,8 +19,4 @@ RUN uv sync --frozen --no-dev 2>/dev/null || uv sync --no-dev
 COPY compose/local/app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Create non-root user
-RUN groupadd -r app && useradd -r -g app app && chown -R app:app /app
-USER app
-
 ENTRYPOINT ["/entrypoint.sh"]

@@ -30,7 +30,7 @@ COPY compose/production/app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Create non-root user
-RUN groupadd -r app && useradd -r -g app app && chown -R app:app /app
+RUN groupadd -r app && useradd -r -g app -m app && chown -R app:app /app
 USER app
 
 # Add uv venv to PATH
