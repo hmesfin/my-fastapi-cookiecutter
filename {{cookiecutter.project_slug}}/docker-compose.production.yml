@@ -1,0 +1,72 @@
+volumes:
+  production_postgres_data: {}
+  production_traefik_acme: {}
+
+services:
+  traefik:
+    image: traefik:v3.2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./compose/production/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - production_traefik_acme:/etc/traefik/acme
+
+  app:
+    build:
+      context: .
+      dockerfile: compose/production/app/Dockerfile
+    env_file:
+      - .envs/.production/.app
+      - .envs/.production/.postgres
+    depends_on:
+      - postgres
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`{{ cookiecutter.domain_name }}`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app.loadbalancer.server.port=8000"
+
+  postgres:
+    build:
+      context: .
+      dockerfile: compose/production/postgres/Dockerfile
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .envs/.production/.postgres
+    environment:
+      - POSTGRES_DB={{ cookiecutter.project_slug }}
+      - POSTGRES_USER={{ cookiecutter.project_slug }}
+
+  redis:
+    image: redis:7-alpine
+{%- if cookiecutter.use_celery == "y" %}
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: compose/production/app/Dockerfile
+    command: celery -A {{ cookiecutter.project_slug }}.celery_app worker -l info --concurrency=4
+    env_file:
+      - .envs/.production/.app
+      - .envs/.production/.postgres
+    depends_on:
+      - postgres
+      - redis
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: compose/production/app/Dockerfile
+    command: celery -A {{ cookiecutter.project_slug }}.celery_app beat -l info
+    env_file:
+      - .envs/.production/.app
+      - .envs/.production/.postgres
+    depends_on:
+      - postgres
+      - redis
+{%- endif %}
