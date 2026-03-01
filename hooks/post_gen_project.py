@@ -1,8 +1,9 @@
-"""Post-generation hook: removes unused files and generates secrets."""
+"""Post-generation hook: removes unused files, generates secrets, and creates uv.lock."""
 
 import os
 import secrets
 import shutil
+import subprocess
 
 PROJECT_DIR = os.path.realpath(os.path.curdir)
 
@@ -77,6 +78,16 @@ if "{{ cookiecutter.use_mailpit }}" != "y":
 
 if "{{ cookiecutter.license }}" == "Proprietary":
   remove_file("LICENSE")
+
+# Generate uv.lock
+try:
+  subprocess.run(["uv", "lock"], cwd=PROJECT_DIR, check=True, capture_output=True)
+  print("uv.lock generated successfully.")
+except FileNotFoundError:
+  print("WARNING: uv not found. Run 'uv lock' manually before building Docker images.")
+except subprocess.CalledProcessError as e:
+  print(f"WARNING: uv lock failed: {e.stderr.decode().strip()}")
+  print("Run 'uv lock' manually before building Docker images.")
 
 print("Project generated successfully!")
 print(f"  cd {{ cookiecutter.project_slug }}")
