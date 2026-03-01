@@ -1,0 +1,32 @@
+{%- if cookiecutter.ci_tool == "GitLab CI" %}
+stages:
+  - lint
+  - test
+
+variables:
+  POSTGRES_USER: dev
+  POSTGRES_PASSWORD: testpass
+  POSTGRES_DB: {{ cookiecutter.project_slug }}_test
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  FASTAPI_ENV: test
+  SECRET_KEY: test-secret-key-not-for-production
+
+lint:
+  stage: lint
+  image: ghcr.io/astral-sh/uv:python{{ cookiecutter.python_version }}-bookworm-slim
+  script:
+    - uv sync --dev
+    - uv run ruff check .
+    - uv run ruff format --check .
+
+test:
+  stage: test
+  image: ghcr.io/astral-sh/uv:python{{ cookiecutter.python_version }}-bookworm-slim
+  services:
+    - postgres:{{ cookiecutter.postgres_version }}
+    - redis:7-alpine
+  script:
+    - uv sync --dev
+    - uv run pytest -v --cov
+{%- endif %}
